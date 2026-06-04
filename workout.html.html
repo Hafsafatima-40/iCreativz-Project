@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>FORGE | Interval Timer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+      background: #0a0a0f;
+      color: #e8e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    /* Main App Container */
+    .app {
+      max-width: 520px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      margin-bottom: 32px;
+      text-align: left;
+    }
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #ffffff 0%, #a0a0b0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .logo span {
+      background: none;
+      -webkit-text-fill-color: #e04e4e;
+      font-weight: 700;
+    }
+    .tagline {
+      font-size: 0.75rem;
+      color: #6a6a7a;
+      margin-top: 6px;
+      letter-spacing: 0.5px;
+    }
+    .subhead {
+      font-size: 0.8rem;
+      color: #6a6a7a;
+      margin-top: 6px;
+      letter-spacing: 0.3px;
+    }
+
+    /* Sound Status Bar */
+    .sound-bar {
+      background: #12121a;
+      border-radius: 14px;
+      padding: 12px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid #22222c;
+    }
+    .sound-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .sound-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 10px;
+      background: #e04e4e;
+      transition: all 0.2s;
+    }
+    .sound-indicator.active {
+      background: #2ecc71;
+      box-shadow: 0 0 6px #2ecc71;
+    }
+    .enable-btn {
+      background: #2ecc71;
+      border: none;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #0a0a0f;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .enable-btn:hover {
+      background: #27ae60;
+      transform: scale(0.98);
+    }
+    .enable-btn:disabled {
+      background: #3a3a4a;
+      color: #8a8a9a;
+      cursor: not-allowed;
+    }
+
+    /* Mode Toggle - Clean Segmented */
+    .mode-toggle {
+      display: flex;
+      gap: 8px;
+      background: #12121a;
+      padding: 4px;
+      border-radius: 40px;
+      margin-bottom: 24px;
+      border: 1px solid #22222c;
+    }
+    .mode-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 10px 0;
+      border-radius: 32px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #8a8a9a;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mode-btn.active {
+      background: #1e1e2a;
+      color: #ffffff;
+    }
+
+    /* Cards */
+    .card {
+      background: #12121a;
+      border-radius: 24px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid #22222c;
+    }
+    .card-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #6a6a7a;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+
+    /* Settings Grid */
+    .settings-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .setting-label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #c0c0d0;
+    }
+    .setting-control {
+      background: #0a0a0f;
+      border: 1px solid #2a2a34;
+      border-radius: 12px;
+      padding: 8px 16px;
+      width: 120px;
+      text-align: center;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #ffffff;
+    }
+    .setting-control:focus {
+      outline: none;
+      border-color: #e04e4e;
+    }
+    select.setting-control {
+      width: auto;
+      min-width: 140px;
+      cursor: pointer;
+    }
+
+    /* Exercise List (Custom Mode) */
+    .exercise-list {
+      max-height: 280px;
+      overflow-y: auto;
+      margin: 16px 0;
+      border-radius: 16px;
+    }
+    .exercise-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #1e1e2a;
+    }
+    .exercise-item input {
+      background: #0a0a0f;
+      border: 1px solid #2a2a34;
+      border-radius: 10px;
+      padding: 8px 12px;
+      color: white;
+      font-size: 0.85rem;
+    }
+    .exercise-name-input {
+      flex: 2;
+    }
+    .exercise-duration-input {
+      width: 70px;
+      text-align: center;
+    }
+    .remove-exercise {
+      background: transparent;
+      border: 1px solid #3a3a4a;
+      color: #e04e4e;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+    .add-exercise-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .add-exercise-row input {
+      flex: 1;
+      background: #0a0a0f;
+      border: 1px solid #2a2a34;
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: white;
+    }
+    .add-exercise-btn {
+      background: #1e1e2a;
+      border: 1px solid #3a3a4a;
+      padding: 10px 18px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+
+    /* Timer Display */
+    .timer-card {
+      text-align: center;
+      background: linear-gradient(135deg, #12121a 0%, #0e0e15 100%);
+      border: 1px solid #2a2a34;
+    }
+    .exercise-name {
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: #a0a0b0;
+      margin-bottom: 16px;
+    }
+    .timer-display {
+      font-size: 5rem;
+      font-weight: 700;
+      font-family: 'Inter', monospace;
+      letter-spacing: 2px;
+      background: #0a0a0f;
+      display: inline-block;
+      padding: 20px 40px;
+      border-radius: 48px;
+      margin: 16px 0;
+      border: 1px solid #2a2a34;
+      color: #ffffff;
+    }
+    .timer-display.warning {
+      color: #e04e4e;
+      border-color: #e04e4e;
+      animation: warningPulse 0.6s ease-in-out;
+    }
+    .timer-display.emergency {
+      color: #ffffff;
+      background: #e04e4e;
+      border-color: #ffffff;
+      animation: emergencyFlash 0.2s infinite;
+    }
+    @keyframes warningPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+    @keyframes emergencyFlash {
+      0%, 100% { background: #e04e4e; }
+      50% { background: #ff6b6b; }
+    }
+    .next-exercise {
+      font-size: 0.8rem;
+      color: #6a6a7a;
+      margin-top: 8px;
+    }
+    .progress-container {
+      background: #1a1a24;
+      border-radius: 100px;
+      height: 4px;
+      margin: 20px 0 10px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: #e04e4e;
+      width: 0%;
+      transition: width 0.2s ease;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .action-btn {
+      background: #1e1e2a;
+      border: 1px solid #3a3a4a;
+      padding: 12px 24px;
+      border-radius: 40px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #e8e8f0;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-width: 100px;
+    }
+    .action-btn.primary {
+      background: #e04e4e;
+      border-color: #e04e4e;
+      color: white;
+    }
+    .action-btn.primary:hover {
+      background: #c43e3e;
+    }
+    .action-btn:hover {
+      background: #2a2a34;
+    }
+    .action-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* Alarm Selector */
+    .alarm-select {
+      background: #0a0a0f;
+      border: 1px solid #2a2a34;
+      border-radius: 12px;
+      padding: 8px 16px;
+      color: white;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    /* Utility */
+    .hidden {
+      display: none;
+    }
+    button {
+      font-family: inherit;
+    }
+    hr {
+      border-color: #1e1e2a;
+      margin: 12px 0;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">FORGE</div>
+    <div class="tagline">interval training · precision timing</div>
+  </div>
+
+  <!-- Sound Bar -->
+  <div class="sound-bar">
+    <div class="sound-status">
+      <div class="sound-indicator" id="soundIndicator"></div>
+      <span id="soundStatusText">Sound disabled</span>
+    </div>
+    <button class="enable-btn" id="enableSoundBtn">Enable Audio</button>
+  </div>
+
+  <!-- Mode Toggle -->
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="simpleModeBtn">Simple</button>
+    <button class="mode-btn" id="customModeBtn">Custom</button>
+  </div>
+
+  <!-- SIMPLE MODE PANEL -->
+  <div id="simplePanel">
+    <div class="card">
+      <div class="card-title">CONFIGURATION</div>
+      <div class="settings-grid">
+        <div class="setting-row">
+          <span class="setting-label">Workout duration</span>
+          <input type="number" id="workoutTime" value="30" min="3" max="300" class="setting-control">
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">Rest duration</span>
+          <input type="number" id="restTime" value="15" min="3" max="120" class="setting-control">
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">Rounds</span>
+          <input type="number" id="rounds" value="4" min="1" max="20" class="setting-control">
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">Warning (seconds)</span>
+          <input type="number" id="warningTime" value="5" min="1" max="30" class="setting-control">
+        </div>
+      </div>
+      <button id="applySimpleBtn" class="action-btn" style="width:100%; margin-top:20px;">Apply Routine</button>
+    </div>
+  </div>
+
+  <!-- CUSTOM MODE PANEL -->
+  <div id="customPanel" class="hidden">
+    <div class="card">
+      <div class="card-title">EXERCISE SEQUENCE</div>
+      <div class="setting-row" style="margin-bottom:16px;">
+        <span class="setting-label">Warning (seconds)</span>
+        <input type="number" id="customWarningTime" value="5" min="1" max="30" class="setting-control">
+      </div>
+      <div id="exerciseListContainer" class="exercise-list"></div>
+      <div class="add-exercise-row">
+        <input type="text" id="newExerciseName" placeholder="Exercise name">
+        <input type="number" id="newExerciseDuration" placeholder="Sec" value="30" style="width:80px">
+        <button id="addExerciseBtn" class="add-exercise-btn">+ Add</button>
+      </div>
+      <button id="applyCustomBtn" class="action-btn" style="width:100%; margin-top:20px;">Apply Custom</button>
+    </div>
+  </div>
+
+  <!-- Alarm Selection -->
+  <div class="card">
+    <div class="card-title">ALARM PROFILE</div>
+    <div class="setting-row">
+      <span class="setting-label">End sound</span>
+      <select id="alarmType" class="alarm-select">
+        <option value="beep">Standard Beep</option>
+        <option value="alarm">Loud Alarm</option>
+        <option value="siren">Police Siren</option>
+        <option value="horn">Air Horn</option>
+      </select>
+    </div>
+    <div class="action-buttons" style="margin-top:16px;">
+      <button id="testAlarmBtn" class="action-btn" style="flex:1;">Test Alarm</button>
+      <button id="testWarningBtn" class="action-btn" style="flex:1;">Test Warning</button>
+    </div>
+  </div>
+
+  <!-- TIMER DISPLAY -->
+  <div class="card timer-card">
+    <div class="exercise-name" id="exerciseName">Ready</div>
+    <div class="timer-display" id="timerDisplay">00:00</div>
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div class="next-exercise" id="nextExercise"></div>
+    <div class="action-buttons">
+      <button id="startBtn" class="action-btn primary">Start</button>
+      <button id="pauseBtn" class="action-btn">Pause</button>
+      <button id="resetBtn" class="action-btn">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Core state
+  let workout = [];
+  let currentIndex = 0;
+  let timeLeft = 0;
+  let timerRunning = false;
+  let timerInterval = null;
+  let warningTriggered = false;
+  let soundEnabled = false;
+  let audioCtx = null;
+
+  // DOM elements
+  const exerciseNameEl = document.getElementById('exerciseName');
+  const timerDisplayEl = document.getElementById('timerDisplay');
+  const nextExerciseEl = document.getElementById('nextExercise');
+  const progressBar = document.getElementById('progressBar');
+  const soundIndicator = document.getElementById('soundIndicator');
+  const soundStatusText = document.getElementById('soundStatusText');
+
+  // ========== SOUND ENGINE ==========
+  function createBeep(freq, duration, vol = 0.25) {
+    return () => {
+      if (!soundEnabled) return;
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = freq;
+        gain.gain.value = vol;
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+        osc.stop(ctx.currentTime + duration);
+        if (ctx.state === 'suspended') ctx.resume();
+      } catch(e) {}
+    };
+  }
+
+  const playBeep = createBeep(880, 0.2);
+  const playWarningBeepSound = createBeep(1046, 0.15, 0.3);
+  const playTickSound = createBeep(523, 0.08, 0.15);
+
+  function playStandardBeep() { for(let i=0;i<3;i++) setTimeout(()=>createBeep(880,0.3)(), i*300); }
+  function playLoudAlarm() { for(let i=0;i<15;i++) setTimeout(()=>createBeep(i%2===0?1000:800,0.15,0.4)(), i*120); }
+  function playSiren() { for(let i=0;i<25;i++) setTimeout(()=>createBeep(i%2===0?880:660,0.2,0.35)(), i*100); }
+  function playAirHorn() { [600,500,400,300,250,200].forEach((f,i)=>setTimeout(()=>createBeep(f,0.25,0.4)(), i*120)); }
+
+  function playSelectedAlarm() {
+    const type = document.getElementById('alarmType').value;
+    if(type === 'beep') playStandardBeep();
+    else if(type === 'alarm') playLoudAlarm();
+    else if(type === 'siren') playSiren();
+    else playAirHorn();
+    document.querySelector('.timer-display').classList.add('emergency');
+    setTimeout(()=>document.querySelector('.timer-display').classList.remove('emergency'), 2800);
+  }
+
+  function enableSound() {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    ctx.resume();
+    soundEnabled = true;
+    soundIndicator.classList.add('active');
+    soundStatusText.innerText = 'Audio ready';
+    document.getElementById('enableSoundBtn').style.opacity = '0.6';
+    document.getElementById('enableSoundBtn').disabled = true;
+    playBeep();
+    setTimeout(()=>playBeep(), 200);
+  }
+
+  // ========== WORKOUT LOGIC ==========
+  function generateSimpleRoutine() {
+    const work = parseInt(document.getElementById('workoutTime').value);
+    const rest = parseInt(document.getElementById('restTime').value);
+    const rounds = parseInt(document.getElementById('rounds').value);
+    let routine = [];
+    for(let i=1;i<=rounds;i++) {
+      routine.push({ name: `WORK · ROUND ${i}`, duration: work });
+      if(i<rounds) routine.push({ name: `REST`, duration: rest });
+    }
+    routine.push({ name: `COOLDOWN`, duration: 20 });
+    return routine;
+  }
+
+  function getDefaultCustom() {
+    return [
+      { name: "JUMPING JACKS", duration: 30 }, { name: "REST", duration: 15 },
+      { name: "PUSH-UPS", duration: 30 }, { name: "REST", duration: 15 },
+      { name: "SQUATS", duration: 30 }, { name: "REST", duration: 15 },
+      { name: "PLANK", duration: 30 }
+    ];
+  }
+
+  function renderExerciseList() {
+    const container = document.getElementById('exerciseListContainer');
+    let exercises = JSON.parse(localStorage.getItem('customWorkout')) || getDefaultCustom();
+    container.innerHTML = '';
+    exercises.forEach((ex, idx) => {
+      const div = document.createElement('div');
+      div.className = 'exercise-item';
+      div.innerHTML = `
+        <input type="text" value="${ex.name}" data-idx="${idx}" class="exercise-name-input">
+        <input type="number" value="${ex.duration}" data-idx="${idx}" class="exercise-duration-input">
+        <button class="remove-exercise" data-idx="${idx}">✕</button>
+      `;
+      container.appendChild(div);
+    });
+    document.querySelectorAll('.exercise-name-input').forEach(inp => inp.addEventListener('change', saveCustomList));
+    document.querySelectorAll('.exercise-duration-input').forEach(inp => inp.addEventListener('change', saveCustomList));
+    document.querySelectorAll('.remove-exercise').forEach(btn => btn.addEventListener('click', (e) => {
+      let idx = parseInt(btn.dataset.idx);
+      let list = JSON.parse(localStorage.getItem('customWorkout')) || getDefaultCustom();
+      list.splice(idx,1);
+      localStorage.setItem('customWorkout', JSON.stringify(list));
+      renderExerciseList();
+    }));
+  }
+  function saveCustomList() {
+    let items = [];
+    document.querySelectorAll('.exercise-item').forEach(item => {
+      let name = item.querySelector('.exercise-name-input').value;
+      let dur = parseInt(item.querySelector('.exercise-duration-input').value);
+      if(name && dur>0) items.push({ name, duration: dur });
+    });
+    localStorage.setItem('customWorkout', JSON.stringify(items));
+  }
+
+  function getWarningTime() {
+    return document.getElementById('simplePanel').classList.contains('hidden') 
+      ? parseInt(document.getElementById('customWarningTime').value)
+      : parseInt(document.getElementById('warningTime').value);
+  }
+
+  function updateDisplay() {
+    if(!workout.length) return;
+    exerciseNameEl.innerText = workout[currentIndex].name;
+    let mins = Math.floor(timeLeft/60), secs = timeLeft%60;
+    timerDisplayEl.innerText = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+    let warnSec = getWarningTime();
+    if(timeLeft <= warnSec && timeLeft>0 && !warningTriggered) timerDisplayEl.classList.add('warning');
+    else if(timeLeft>warnSec) timerDisplayEl.classList.remove('warning');
+    nextExerciseEl.innerText = (currentIndex+1 < workout.length) ? `UP NEXT: ${workout[currentIndex+1].name}` : "FINAL EXERCISE";
+    let total = workout[currentIndex].duration;
+    progressBar.style.width = `${(timeLeft/total)*100}%`;
+  }
+
+  function nextExercise() {
+    currentIndex++;
+    if(currentIndex >= workout.length) {
+      stopTimer();
+      exerciseNameEl.innerText = "COMPLETE";
+      timerDisplayEl.innerText = "00:00";
+      nextExerciseEl.innerText = "GREAT WORK";
+      progressBar.style.width = "100%";
+      playSelectedAlarm();
+      timerDisplayEl.classList.remove('warning');
+      return;
+    }
+    timeLeft = workout[currentIndex].duration;
+    warningTriggered = false;
+    timerDisplayEl.classList.remove('warning','emergency');
+    updateDisplay();
+    playBeep();
+  }
+
+  function tick() {
+    if(timeLeft <= 0) nextExercise();
+    else {
+      timeLeft--;
+      let warn = getWarningTime();
+      if(timeLeft <= warn && timeLeft>0 && !warningTriggered) { warningTriggered = true; playWarningBeepSound(); }
+      if(timeLeft <= 3 && timeLeft>0) playTickSound();
+      if(timeLeft === 0) playSelectedAlarm();
+      updateDisplay();
+    }
+  }
+
+  function startTimer() {
+    if(timerRunning || !workout.length) return;
+    if(!soundEnabled) { alert('Enable audio first'); return; }
+    timerRunning = true;
+    timerInterval = setInterval(tick,1000);
+  }
+  function stopTimer() { if(timerInterval) clearInterval(timerInterval); timerRunning = false; }
+  function pauseTimer() { stopTimer(); timerDisplayEl.classList.remove('emergency'); }
+  function resetTimer() {
+    stopTimer(); warningTriggered = false; timerDisplayEl.classList.remove('warning','emergency');
+    if(workout.length) { currentIndex=0; timeLeft=workout[0].duration; updateDisplay(); }
+  }
+
+  function applySimple() { workout = generateSimpleRoutine(); resetTimer(); }
+  function applyCustom() {
+    let saved = JSON.parse(localStorage.getItem('customWorkout')) || getDefaultCustom();
+    if(saved.length) workout = saved;
+    else workout = getDefaultCustom();
+    resetTimer();
+  }
+
+  // UI Toggles
+  document.getElementById('simpleModeBtn').addEventListener('click',()=>{
+    document.getElementById('simplePanel').classList.remove('hidden');
+    document.getElementById('customPanel').classList.add('hidden');
+    document.getElementById('simpleModeBtn').classList.add('active');
+    document.getElementById('customModeBtn').classList.remove('active');
+    applySimple();
+  });
+  document.getElementById('customModeBtn').addEventListener('click',()=>{
+    document.getElementById('simplePanel').classList.add('hidden');
+    document.getElementById('customPanel').classList.remove('hidden');
+    document.getElementById('customModeBtn').classList.add('active');
+    document.getElementById('simpleModeBtn').classList.remove('active');
+    renderExerciseList();
+    applyCustom();
+  });
+
+  document.getElementById('applySimpleBtn').addEventListener('click', applySimple);
+  document.getElementById('applyCustomBtn').addEventListener('click', applyCustom);
+  document.getElementById('enableSoundBtn').addEventListener('click', enableSound);
+  document.getElementById('testAlarmBtn').addEventListener('click', ()=> { if(soundEnabled) playSelectedAlarm(); else alert('Enable audio first'); });
+  document.getElementById('testWarningBtn').addEventListener('click', ()=> { if(soundEnabled) playWarningBeepSound(); else alert('Enable audio first'); });
+  document.getElementById('startBtn').addEventListener('click', startTimer);
+  document.getElementById('pauseBtn').addEventListener('click', pauseTimer);
+  document.getElementById('resetBtn').addEventListener('click', resetTimer);
+  document.getElementById('addExerciseBtn').addEventListener('click', ()=>{
+    let name = document.getElementById('newExerciseName').value;
+    let dur = parseInt(document.getElementById('newExerciseDuration').value);
+    if(name && dur>0) {
+      let list = JSON.parse(localStorage.getItem('customWorkout')) || getDefaultCustom();
+      list.push({ name, duration: dur });
+      localStorage.setItem('customWorkout', JSON.stringify(list));
+      renderExerciseList();
+      document.getElementById('newExerciseName').value = '';
+    }
+  });
+
+  // Init
+  workout = generateSimpleRoutine();
+  resetTimer();
+</script>
+</body>
+</html>
